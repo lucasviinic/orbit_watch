@@ -5,8 +5,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'presenters/home/home.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
   runApp(const MyApp());
 }
 
@@ -64,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
               label: 'Home',
             ),
             const BottomNavigationBarItem(
-              icon: Icon(Icons.person, size: 33),
+              icon: Icon(Icons.timer_outlined, size: 33),
               label: 'Profile',
             ),
           ],

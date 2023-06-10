@@ -1,10 +1,10 @@
-// ignore_for_file: avoid_unnecessary_containers
-
 import 'package:flutter/material.dart';
 import 'package:flutter_cube/flutter_cube.dart';
 
 import 'dart:ui' as ui;
 import 'dart:math' as math;
+
+import 'package:flutter_svg/flutter_svg.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -19,35 +19,50 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   late Object _stars;
   late AnimationController _controller;
 
-  void generateSphereObject(Object parent, String name, double radius,
-      bool backfaceCulling, String texturePath) async {
-    final Mesh mesh =
-        await generateSphereMesh(radius: radius, texturePath: texturePath);
-    parent
-        .add(Object(name: name, mesh: mesh, backfaceCulling: backfaceCulling));
+  Object? _orbitPoint;
+
+  void generateOrbitPoint() async {
+    // Criar o objeto do ponto
+    _orbitPoint = Object(name: 'orbitPoint', scale: Vector3.all(0.1));
+    generateSphereObject(_orbitPoint!, 'surface', 1.0, true, 'assets/images/metal.jpg');
+
+    // Define a posição do ponto em relação ao planeta
+    _orbitPoint!.position.x = 7; // Ajuste a posição conforme necessário
+    _orbitPoint!.position.y = 0; // Ajuste a posição conforme necessário
+    _orbitPoint!.position.z = 0; // Ajuste a posição conforme necessário
+
+    // Adicionar o ponto à cena
+    _scene.world.add(_orbitPoint!);
+
+    // Atualizar a textura
+    _scene.updateTexture();
+  }
+
+  void generateSphereObject(Object parent, String name, double radius, bool backfaceCulling, String texturePath) async {
+    final Mesh mesh = await generateSphereMesh(radius: radius, texturePath: texturePath);
+    parent.add(Object(name: name, mesh: mesh, backfaceCulling: backfaceCulling));
     _scene.updateTexture();
   }
 
   void _onSceneCreated(Scene scene) {
     _scene = scene;
-    _scene.camera.position.z = 16;
+    _scene.camera.position.z = 34;
 
-    // model from https://free3d.com/3d-model/planet-earth-99065.html
-    // _earth = Object(name: 'earth', scale: Vector3(10.0, 10.0, 10.0), backfaceCulling: true, fileName: 'assets/earth/earth.obj');
-
-    // create by code
     _earth = Object(name: 'earth', scale: Vector3(10.0, 10.0, 10.0));
-    generateSphereObject(
-        _earth!, 'surface', 0.485, true, 'assets/images/earth/4096_night_lights.jpg');
-    generateSphereObject(
-        _earth!, 'clouds', 0.5, true, 'assets/images/earth/4096_clouds.png');
+    generateSphereObject(_earth!, 'surface', 0.485, true, 'assets/images/earth/4096_night_lights.jpg');
+    generateSphereObject(_earth!, 'clouds', 0.5, true, 'assets/images/earth/4096_clouds.png');
     _scene.world.add(_earth!);
 
-    // texture from https://www.solarsystemscope.com/textures/
     _stars = Object(name: 'stars', scale: Vector3(2000.0, 2000.0, 2000.0));
-    generateSphereObject(
-        _stars, 'surface', 0.5, false, 'assets/images/stars/2k_stars.jpg');
+    generateSphereObject(_stars, 'surface', 0.5, false, 'assets/images/stars/2k_stars.jpg');
     _scene.world.add(_stars);
+
+    generateOrbitPoint();
+    if (_orbitPoint != null) {
+      _orbitPoint!.rotation.y = 0;
+      _orbitPoint!.updateTransform();
+      _earth!.add(_orbitPoint!);
+    }
   }
 
   @override
@@ -59,6 +74,22 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         if (_earth != null) {
           _earth!.rotation.y = _controller.value * 360;
           _earth!.updateTransform();
+          _scene.update();
+        }
+      })
+      ..addListener(() {
+      if (_earth != null && _orbitPoint != null) {
+          // Calcula a posição do ponto ao redor da Terra usando trigonometria
+          double angle = _controller.value * 2 * math.pi; // Ângulo de rotação em radianos
+          double radius = 7.0; // Raio da órbita do ponto em torno da Terra
+          double x = radius * math.cos(angle); // Coordenada x
+          double z = radius * math.sin(angle); // Coordenada z
+
+          // Atualiza a posição do ponto em relação à Terra
+          _orbitPoint!.position.x = x;
+          _orbitPoint!.position.z = z;
+          _orbitPoint!.updateTransform();
+
           _scene.update();
         }
       })
@@ -120,7 +151,35 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Cube(onSceneCreated: _onSceneCreated),
+      body: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          Cube(onSceneCreated: _onSceneCreated),
+          Container(
+            width: MediaQuery.of(context).size.width * .85,
+            height: 50,
+            margin: const EdgeInsets.only(top: 60),
+            decoration: BoxDecoration(
+              color: const Color.fromRGBO(32, 30, 57, .7),
+              borderRadius: BorderRadius.circular(50)
+            ),
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 20, right: 10),
+                  child: SizedBox(
+                    width: 23,
+                    child: SvgPicture.asset(
+                      'assets/svg/compass.svg',
+                      colorFilter: const ColorFilter.mode(Color.fromRGBO(255, 255, 255, .7), BlendMode.srcIn)
+                    )
+                  ),
+                )
+              ]
+            )
+          )
+        ]
+      ),
     );
   }
 }
