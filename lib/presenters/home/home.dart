@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_cube/flutter_cube.dart';
 
 import 'dart:ui' as ui;
@@ -23,11 +24,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   void generateOrbitPoint() async {
     // Criar o objeto do ponto
-    _orbitPoint = Object(name: 'orbitPoint', scale: Vector3.all(0.1));
+    _orbitPoint = Object(name: 'orbitPoint', scale: Vector3.all(0.05));
     generateSphereObject(_orbitPoint!, 'surface', 1.0, true, 'assets/images/metal.jpg');
 
     // Define a posição do ponto em relação ao planeta
-    _orbitPoint!.position.x = 7; // Ajuste a posição conforme necessário
+    _orbitPoint!.position.x = 4; // Ajuste a posição conforme necessário
     _orbitPoint!.position.y = 0; // Ajuste a posição conforme necessário
     _orbitPoint!.position.z = 0; // Ajuste a posição conforme necessário
 
@@ -69,7 +70,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
     _controller = AnimationController(
-        duration: const Duration(milliseconds: 30000), vsync: this)
+      duration: const Duration(minutes: 1), vsync: this)
       ..addListener(() {
         if (_earth != null) {
           _earth!.rotation.y = _controller.value * 360;
@@ -155,28 +156,33 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         alignment: Alignment.topCenter,
         children: [
           Cube(onSceneCreated: _onSceneCreated),
-          Container(
-            width: MediaQuery.of(context).size.width * .85,
-            height: 50,
-            margin: const EdgeInsets.only(top: 60),
-            decoration: BoxDecoration(
-              color: const Color.fromRGBO(32, 30, 57, .7),
-              borderRadius: BorderRadius.circular(50)
-            ),
-            child: Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 20, right: 10),
-                  child: SizedBox(
-                    width: 23,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: TextField(
+                decoration: InputDecoration(
+                  isDense: true,
+                  filled: true,
+                  fillColor: const Color.fromRGBO(32, 30, 57, .7),
+                  hintText: 'Search a object',
+                  hintStyle: const TextStyle(color: Color.fromRGBO(255, 255, 255, .6)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(50),
+                      borderSide: BorderSide.none,
+                  ),
+                  floatingLabelBehavior: FloatingLabelBehavior.never,
+                  prefixIcon: Transform.scale(
+                    scale: .5,
                     child: SvgPicture.asset(
                       'assets/svg/compass.svg',
-                      colorFilter: const ColorFilter.mode(Color.fromRGBO(255, 255, 255, .7), BlendMode.srcIn)
-                    )
+                      colorFilter: const ColorFilter.mode(Color.fromRGBO(255, 255, 255, .7), BlendMode.srcIn),
+                    ),
                   ),
-                )
-              ]
-            )
+                ),
+                style: const TextStyle(
+                  color: Colors.white
+                ),
+                cursorColor: Colors.white,
+            ),
           )
         ]
       ),
